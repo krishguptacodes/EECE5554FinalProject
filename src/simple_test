@@ -1,1 +1,103 @@
 
+
+import math
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import Twist
+
+
+class SimpleAvoid(Node):
+    def __init__(self):
+        super().__init__("simple_avoid")
+
+        # Parameters from YAML
+        self.declare_parameter("scan_topic", "/scan")
+        self.declare_parameter("cmd_vel_topic", "/cmd_vel")
+        self.declare_parameter("forward_speed", 0.20)
+        self.declare_parameter("turn_speed", 0.60)
+        self.declare_parameter("min_front_distance", 0.50)
+        self.declare_parameter("front_angle_width_deg", 60.0)
+        self.declare_parameter("control_rate_hz", 10.0)
+
+        scan_topic = self.get_parameter("scan_topic").value
+        cmd_topic = self.get_parameter("cmd_vel_topic").value
+        self.forward_speed = self.get_parameter("forward_speed").value
+        self.turn_speed = self.get_parameter("turn_speed").value
+        self.min_front_distance = self.get_parameter("min_front_distance").value
+        self.front_angle_width_deg = self.get_parameter("front_angle_width_deg").value
+        rate_hz = self.get_parameter("control_rate_hz").value
+
+        self.last_scan = None
+
+        self.create_subscription(LaserScan, scan_topic, self.scan_cb, 10)
+        self.cmd_pub = self.create_publisher(Twist, cmd_topic, 10)
+
+        period = 1.0 / rate_hz if rate_hz > 0.0 else 0.1
+        self.create_timer(period, self.control_loop)
+
+        self.get_logger().info(
+            f"simple_avoid running (scan={scan_topic}, cmd_vel={cmd_topic})"
+        )
+
+    def scan_cb(self, msg: LaserScan):
+        self.last_scan = msg
+
+    def control_loop(self):
+        twist = Twist()
+
+        if self.last_scan is None:
+            self.cmd_pub.publish(twist)
+            return
+
+        d = self.min_front_in_arc(self.last_scan)
+        if d is None:
+            self.cmd_pub.publish(twist)
+            return
+
+        if d < self.min_front_distance:
+            twist.linear.x = 0.0
+            twist.angular.z = self.turn_speed
+        else:
+            twist.linear.x = self.forward_speed
+            twist.angular.z = 0.0
+
+        self.cmd_pub.publish(twist)
+
+    def min_front_in_arc(self, scan: LaserScan):
+        ranges = scan.ranges
+        if not ranges or scan.angle_increment == 0.0:
+            return None
+
+        angle_min = scan.angle_min
+        inc = scan.angle_increment
+
+        # index for 0 rad
+        idx_center = int(round((0.0 - angle_min) / inc))
+        half_width_rad = math.radians(self.front_angle_width_deg / 2.0)
+        idx_half = int(round(half_width_rad / inc))
+
+        i0 = max(0, idx_center - idx_half)
+        i1 = min(len(ranges) - 1, idx_center + idx_half)
+
+        vals = [
+            r for r in ranges[i0 : i1 + 1]
+            if math.isfinite(r) and r > 0.0
+        ]
+        return min(vals) if vals else None
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SimpleAvoid()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
