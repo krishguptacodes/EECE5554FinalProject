@@ -27,16 +27,34 @@ def generate_launch_description():
         output='screen'
     )
 
-    # Simple path publisher for testing
-    path_publisher_node = Node(
+    # TF publisher for testing
+    tf_publisher_node = Node(
         package='path_planning',
-        executable='simple_path_publisher.py',
-        name='simple_path_publisher',
+        executable='test_tf_publisher.py',
+        name='test_tf_publisher',
         output='screen'
     )
+
+    # Path planning service
+    path_planning_service_node = Node(
+        package='path_planning',
+        executable='path_planning_service.py',
+        name='path_planning_service',
+        parameters=[params_file],
+        output='screen'
+    )
+
+    # Test client (commented out by default)
+    # test_client_node = Node(
+    #     package='path_planning',
+    #     executable='test_path_planning_client.py',
+    #     name='test_path_planning_client',
+    #     output='screen'
+    # )
 
     return LaunchDescription([
         declare_params_file_cmd,
         pure_pursuit_node,
-        path_publisher_node
+        tf_publisher_node,
+        path_planning_service_node
     ])

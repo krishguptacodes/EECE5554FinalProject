@@ -1,30 +1,41 @@
-path_planning:
+# Pure Pursuit Controller Parameters
+pure_pursuit_controller:
   ros__parameters:
-    # Basic movement parameters
+    # Pure pursuit parameters
+    lookahead_distance: 0.5         # meters - lookahead distance for pure pursuit
     max_linear_velocity: 0.3        # m/s
     max_angular_velocity: 1.0       # rad/s
-    min_linear_velocity: 0.05       # m/s
-    min_angular_velocity: 0.1       # rad/s
-
-    # Waypoint following
-    waypoint_tolerance: 0.2         # meters - how close to reach waypoint
     goal_tolerance: 0.1             # meters - final goal tolerance
-    angular_tolerance: 0.1          # radians - orientation tolerance
-
-    # Path planning parameters
-    planning_frequency: 10.0        # Hz - how often to replan
-    controller_frequency: 20.0      # Hz - control loop frequency
-
-    # Safety parameters
-    min_obstacle_distance: 0.5      # meters - minimum distance to obstacles
-    emergency_stop_distance: 0.3    # meters - emergency brake distance
 
     # Topics
     cmd_vel_topic: "/cmd_vel"
-    goal_pose_topic: "/goal_pose"
-    current_pose_topic: "/amcl_pose"  # Will be available in Level 2
-    map_topic: "/map"                 # Will be available in Level 2
+    path_topic: "/path"
 
     # Frame IDs
-    global_frame: "map"              # Global coordinate frame
-    robot_frame: "base_link"         # Robot coordinate frame
+    robot_frame: "base_link"
+    global_frame: "map"
+
+# Path Planning Service Parameters
+path_planning_service:
+  ros__parameters:
+    # Service configuration
+    service_name: "plan_path"
+    path_topic: "/path"
+    cmd_vel_topic: "/cmd_vel"
+    map_topic: "/map"
+    default_tolerance: 0.2
+    publish_path: true
+    max_planning_time: 10.0         # seconds
+
+    # A* planner parameters
+    allow_diagonal: true
+    heuristic_weight: 1.0
+    inflation_radius: 0.2           # meters - obstacle inflation
+    robot_radius: 0.2               # meters - robot radius
+
+# Test Client Parameters
+test_path_planning_client:
+  ros__parameters:
+    service_name: "plan_path"
+    frame_id: "map"
+    test_interval: 10.0             # seconds between tests

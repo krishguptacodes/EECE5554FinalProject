@@ -1,0 +1,13 @@
+# Service definition for path planning
+# Request: start and goal poses
+geometry_msgs/PoseStamped start
+geometry_msgs/PoseStamped goal
+float64 tolerance  # Goal tolerance in meters (optional, default from params)
+
+---
+
+# Response: planned path and status
+nav_msgs/Path path
+bool success
+string message  # Error message or success info
+float64 planning_time  # Time taken to plan path in seconds
