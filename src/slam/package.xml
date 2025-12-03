@@ -1,1 +1,18 @@
-n/a rn
+<?xml version="1.0"?>
+<package format="3">
+  <name>slam_tools</name>
+  <version>0.0.1</version>
+  <description>SLAM monitoring and diagnostics tools for TurtleBot3.</description>
+
+  <maintainer email="your_email@xyz.com">Krish Gupta</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>nav_msgs</depend>
+  <depend>std_msgs</depend>
+
+  <export>
+  </export>
+</package>
